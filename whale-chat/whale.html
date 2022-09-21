@@ -1,0 +1,130 @@
+<html>
+<head>
+    <title>chatroom</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.js"></script>
+    <link href="./public/whale.css" rel="stylesheet" type="text/css">
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js"
+        integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- chat-->
+    <div id="chat-list" class="chat-list">
+            <div id="empty" class="empty"></div>
+            <div id="chat" class="chat">
+                <div id="chat-top" class="chat-top"></div>
+                <div id="chat-bottom" class="chat-bottom"> 
+                    <select id="nick-list">
+                        <option value="전체">전체</option>
+                    </select>
+                    <input type="text" id="message" placeholder="  write your message here">
+                    <button type="button" id="btn_1" class="btn_1" onclick="send();">send</button>
+                    <button type="button" id="btn_2" class="btn_2" onclick="send();">+</button>
+                </div>
+            </div>
+        </div>
+    
+       
+        <!-- wave background -->
+        <div class="waveWrapper waveAnimation">
+            <div class="waveWrapperInner bgTop">
+                <div class="wave waveTop" style="background-image: url('http://front-end-noobs.com/jecko/img/wave-top.png')"></div>
+            </div>
+            <div class="waveWrapperInner bgMiddle">
+                <div class="wave waveMiddle" style="background-image: url('http://front-end-noobs.com/jecko/img/wave-mid.png')"></div>
+            </div>
+            <div class="waveWrapperInner bgBottom">
+                <div class="wave waveBottom" style="background-image: url('http://front-end-noobs.com/jecko/img/wave-bot.png')"></div>
+            </div>
+        </div>
+
+        <!-- whale -->
+        <div class="col-md-7">
+			<div class="card">
+				<div class="blue-ocean">
+					<div class="blue-whale-line1"></div>					
+					<div class="blue-whale">
+					    <div class="blue-whale-main">
+							<div class="blue-whale-eye"></div>
+							<div class="gill-container"><div class="blue-whale-gill"></div></div>
+							<div class="blue-whale-color"></div>
+							<div class="blue-whale-color-bottom"></div>
+						</div>
+						<div class="blue-whale-backside"><div></div></div>
+						<div class="blue-whale-flipper"></div>						
+						<!--<div class="blue-whale-back"></div>
+						<div class="blue-whale-tail"></div>
+						<div class="blue-whale-test"></div>
+						<div class="blue-whale-flipper"></div>-->	
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+    <!--socket-->
+    <script>
+        var nickname = prompt("닉네임 입력");
+        var socket = io.connect();
+        socket.emit("info2", {nickname: nickname});
+
+        // 메세지 send
+        function send(){
+            let msg = document.getElementById('message').value;   
+            let nick = document.getElementById('nick-list').value;
+            console.log(nick); 
+            socket.emit("send", { msg: msg, to: nick });    
+            document.getElementById("message").value = "";  
+        }
+        socket.on("newMessage", function(data){ 
+            console.log(data);
+            let chat_top = document.getElementById('chat-top');
+            let div = document.createElement("div");
+            let div_chat = document.createElement("div");
+            var span = document.createElement("span");
+
+            div_chat.textContent = data.msg;
+            div.appendChild(div_chat);
+            chat_top.appendChild(div);
+
+            if ( data.is_dm ) div_chat.textContent = "(DM)" + div_chat.textContent; 
+            if ( data.nickname == nickname ){div.classList.add("my-chat");} 
+            else{   
+                span.textContent = data.nickname;
+                div.appendChild(span);
+                div.classList.add("other-chat");
+                div.appendChild(div_chat);
+                chat_top.appendChild(div);
+            }
+            
+        })
+        // chat-list에 유저입장 알림 div 생성
+        socket.on("notice", function(data){
+            let chat_top = document.getElementById("chat-top");
+            let div = document.createElement("div"); 
+            div.textContent = data;
+            div.classList.add("notice_1") 
+            chat_top.appendChild(div);
+        
+        });
+        //닉네임 리스트
+        socket.on("list", function(list){
+            let room = document.getElementById("room")
+            let nick_list = document.getElementById("nick-list"); 
+            while (nick_list.firstChild){
+                nick_list.removeChild(nick_list.lastChild); 
+            }
+            let option = document.createElement("option");
+            option.text = "전체";
+            option.value = "전체";
+            nick_list.appendChild(option);
+
+            for ( let [key, value] of Object.entries(list) ){
+                let option = document.createElement('option');
+                option.text = value;
+                option.value = value;
+                nick_list.appendChild( option );
+            }
+        });
+    </script>
+</body>
+</html> 
